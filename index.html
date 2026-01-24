@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投胎模拟器</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 封面页 -->
+    <div id="cover-page" class="page active">
+        <div class="cover-content">
+            <h1 class="game-title">投胎模拟器</h1>
+            <button id="start-game-btn" class="btn btn-primary">开始游戏</button>
+            <div class="cover-footer">
+                <p class="guide-text">体验一段由 AI 推演的人生旅程</p>
+                <p class="author">Powered by PlayKit AI</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 出生初始化页 -->
+    <div id="init-page" class="page">
+        <div class="init-content">
+            <h2>设定你的出生</h2>
+            <div class="form-group">
+                <label for="birth-year">出生年份</label>
+                <input type="text" id="birth-year" placeholder="例如 1990">
+            </div>
+            <div class="form-group">
+                <label for="birth-place">出生地点</label>
+                <input type="text" id="birth-place" placeholder="例如 深圳">
+            </div>
+            <div class="form-group">
+                <label for="baby-wish">婴儿寄语</label>
+                <textarea id="baby-wish" rows="4" placeholder="小孩子也许看不懂，但会在心里种下一颗种子"></textarea>
+            </div>
+            <button id="enter-world-btn" class="btn btn-primary">进入世界</button>
+        </div>
+    </div>
+
+    <!-- 核心游戏页 -->
+    <div id="game-page" class="page">
+        <div class="game-layout">
+            <!-- 左侧：世界演变区 -->
+            <div class="world-section">
+                <h3>世界背景</h3>
+                <div id="world-year" class="info-item"></div>
+                <div id="world-place" class="info-item"></div>
+                <div id="world-context" class="context-text"></div>
+            </div>
+
+            <!-- 中间：主角人生故事区 -->
+            <div class="life-section">
+                <h3>人生故事</h3>
+                <div id="current-age" class="age-display"></div>
+                <div id="life-event" class="event-text"></div>
+                <div class="action-buttons">
+                    <button id="advance-age-btn" class="btn btn-primary">推进年龄</button>
+                    <button id="intervene-btn" class="btn btn-secondary">介入人生</button>
+                    <button id="ask-question-btn" class="btn btn-secondary">提问</button>
+                </div>
+            </div>
+
+            <!-- 右侧：属性和照片区 -->
+            <div class="stats-section">
+                <div class="stats-panel">
+                    <h3>角色属性</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">年龄：</span>
+                        <span id="stat-age" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">健康：</span>
+                        <span id="stat-health" class="stat-value">100</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">财富：</span>
+                        <span id="stat-wealth" class="stat-value">$0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">剩余介入：</span>
+                        <span id="stat-interventions" class="stat-value">3</span>
+                    </div>
+                </div>
+                <div class="photo-panel">
+                    <h3>当前照片</h3>
+                    <div id="current-photo" class="photo-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结算页 -->
+    <div id="end-page" class="page">
+        <div class="end-content">
+            <h2>人生落幕</h2>
+            <div id="life-summary" class="summary-text"></div>
+            <div class="final-stats">
+                <p>最终财富：<span id="final-wealth"></span></p>
+            </div>
+            <div id="photo-gallery" class="photo-gallery"></div>
+            <div id="life-poem" class="poem-text"></div>
+            <button id="restart-btn" class="btn btn-primary">重新开始</button>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p id="loading-message">加载中...</p>
+    </div>
+
+    <!-- 错误提示 -->
+    <div id="error-toast" class="error-toast"></div>
+
+    <!-- 介入输入弹窗 -->
+    <div id="intervene-modal" class="modal">
+        <div class="modal-content">
+            <h3>介入人生</h3>
+            <p>输入你的建议（来自未来的你）：</p>
+            <textarea id="intervene-input" rows="4" placeholder="例如：多读书、去创业、注意健康..."></textarea>
+            <div class="modal-buttons">
+                <button id="intervene-confirm-btn" class="btn btn-primary">确认</button>
+                <button id="intervene-cancel-btn" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提问弹窗 -->
+    <div id="question-modal" class="modal">
+        <div class="modal-content">
+            <h3>提问</h3>
+            <p>你想问什么？</p>
+            <textarea id="question-input" rows="3" placeholder="例如：我现在过得开心吗？"></textarea>
+            <div class="modal-buttons">
+                <button id="question-confirm-btn" class="btn btn-primary">提问</button>
+                <button id="question-cancel-btn" class="btn btn-secondary">取消</button>
+            </div>
+            <div id="question-answer" class="answer-text"></div>
+        </div>
+    </div>
+
+    <!-- 引入 PlayKit SDK (UMD) -->
+    <script src="https://unpkg.com/playkit-sdk@latest/dist/playkit-sdk.umd.js"></script>
+    <!-- 游戏逻辑 -->
+    <script src="game.js"></script>
+</body>
+</html>

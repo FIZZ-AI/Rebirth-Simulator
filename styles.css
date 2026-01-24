@@ -1,0 +1,489 @@
+/* CSS 重置和全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #4a90e2;
+    --secondary-color: #7b68ee;
+    --bg-color: #f5f7fa;
+    --text-color: #333;
+    --border-color: #ddd;
+    --success-color: #52c41a;
+    --error-color: #ff4d4f;
+    --warning-color: #faad14;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 
+                 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* 页面容器 */
+.page {
+    display: none;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.page.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 按钮样式 */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #357abd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #6a5acd;
+    transform: translateY(-2px);
+}
+
+.btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 封面页 */
+#cover-page {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.cover-content {
+    text-align: center;
+    color: white;
+}
+
+.game-title {
+    font-size: 64px;
+    margin-bottom: 40px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    animation: fadeInDown 1s ease;
+}
+
+.cover-footer {
+    margin-top: 60px;
+}
+
+.guide-text {
+    font-size: 18px;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.author {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* 初始化页 */
+#init-page {
+    background: var(--bg-color);
+}
+
+.init-content {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+}
+
+.init-content h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--primary-color);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-group textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+#enter-world-btn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* 游戏页面 */
+#game-page {
+    background: var(--bg-color);
+    align-items: flex-start;
+    padding: 20px;
+}
+
+.game-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.world-section,
+.life-section,
+.stats-section {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.world-section h3,
+.life-section h3,
+.stats-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 16px;
+    font-size: 20px;
+}
+
+.info-item {
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.context-text,
+.event-text {
+    line-height: 1.8;
+    color: #555;
+    margin-top: 16px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    min-height: 200px;
+}
+
+.age-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 16px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.action-buttons .btn {
+    flex: 1;
+}
+
+.stats-panel {
+    margin-bottom: 24px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stat-label {
+    font-weight: 500;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.photo-container {
+    width: 100%;
+    min-height: 200px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.photo-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* 结算页 */
+#end-page {
+    background: var(--bg-color);
+}
+
+.end-content {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+}
+
+.end-content h2 {
+    color: var(--primary-color);
+    margin-bottom: 24px;
+}
+
+.summary-text {
+    line-height: 2;
+    margin-bottom: 24px;
+    text-align: left;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.final-stats {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 24px;
+    color: var(--primary-color);
+}
+
+.photo-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.photo-gallery img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.poem-text {
+    font-style: italic;
+    line-height: 2;
+    color: #666;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+/* 加载提示 */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+#loading-message {
+    color: white;
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 错误提示 */
+.error-toast {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--error-color);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    animation: slideIn 0.3s ease;
+}
+
+.error-toast.active {
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* 弹窗 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 16px;
+}
+
+.modal-content textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    margin: 16px 0;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.answer-text {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    line-height: 1.8;
+    display: none;
+}
+
+.answer-text.active {
+    display: block;
+}
+
+/* 动画 */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .game-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-title {
+        font-size: 40px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+}
