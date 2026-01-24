@@ -1,0 +1,23 @@
+# 开发文件
+debug.html
+test-*.html
+game-fixed.html
+
+# 文档（可选，如果不想上传）
+CHECKLIST.md
+FINAL_CHECK.md
+PROJECT_SUMMARY.md
+TESTING.md
+TROUBLESHOOTING.md
+game_prompt.txt
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Kiro
+.kiro/

@@ -1,7 +1,7 @@
 // ==================== 配置常量 ====================
 const CONFIG = {
     GAME_ID: '46b3ff0f-be0d-47af-a685-ca14a09d104a',
-    DEVELOPER_TOKEN: '', // 生产环境：移除开发者令牌，启用用户登录
+    DEVELOPER_TOKEN: 'dev-6a650104-4c10-4df1-a331-b21758e61b00',
     TEXT_MODEL: 'gpt-4o',
     IMAGE_MODEL: 'flux-1-schnell'
 };
