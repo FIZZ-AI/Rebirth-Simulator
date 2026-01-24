@@ -19,11 +19,6 @@ function devLog(...args) {
     }
 }
 
-// 生产环境警告（已禁用 - 开发者承担 Spark 费用）
-// if (CONFIG.DEVELOPER_TOKEN && !isDevelopment) {
-//     alert('警告：在生产环境中检测到开发者令牌！请移除 DEVELOPER_TOKEN 以启用用户登录模式。');
-// }
-
 // ==================== GameStateManager 类 ====================
 class GameStateManager {
     constructor() {
