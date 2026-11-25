@@ -14,11 +14,11 @@
             <div class="mode-picker">
                 <label for="game-mode">选择玩法</label>
                 <select id="game-mode">
-                    <option value="classic">经典模式 · 免费，无需账号，可离线</option>
-                    <option value="deepseek">AI 模式 · DeepSeek（推荐，需本机配置）</option>
+                    <option value="deepseek">AI 模式 · 作者提供，无需账号或密钥</option>
+                    <option value="classic">经典模式 · 无需联网</option>
                     <option value="ai">AI 模式 · PlayKit（需登录与积分）</option>
                 </select>
-                <p id="mode-description">本地随机事件与规则驱动，完整体验出生、成长、介入与人生结算。</p>
+                <p id="mode-description">直接体验 AI 人生，无需注册或填写密钥。共享额度每天 100 次；人物使用本地插画。</p>
                 <details id="ai-settings" hidden>
                     <summary>AI 设置（开发者可选）</summary>
                     <label for="game-id">PlayKit Game ID</label>
@@ -166,6 +166,7 @@
     </div>
 
     <!-- 经典模式不加载任何外部资源；PlayKit 仅在选择 AI 模式后加载。 -->
+    <script src="service-config.js"></script>
     <script src="classic.js"></script>
     <!-- 游戏逻辑 -->
     <script src="game.js"></script>

@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
 STATIC = {"/": "index.html", "/index.html": "index.html", "/styles.css": "styles.css",
-          "/game.js": "game.js", "/classic.js": "classic.js"}
+          "/game.js": "game.js", "/classic.js": "classic.js", "/service-config.js": "service-config.js"}
 SLOTS = threading.BoundedSemaphore(2)
 
 
