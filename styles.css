@@ -487,3 +487,27 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
 }
+
+/* 启动配置与状态 */
+[hidden] { display: none !important; }
+.mode-picker { max-width: 480px; margin: 0 auto 24px; text-align: left; }
+.mode-picker label { display: block; margin: 12px 0 6px; }
+.mode-picker select, .mode-picker input, .age-control input { width: 100%; padding: 10px; border: 1px solid #c9cde2; border-radius: 8px; font: inherit; background: white; color: #333; }
+.mode-picker p { margin: 12px 0; font-size: 14px; }
+.mode-picker details { padding: 14px; background: rgba(0,0,0,.16); border-radius: 10px; }
+.mode-picker summary, .history summary { cursor: pointer; }
+.cover-content { width: 100%; max-width: 720px; }
+.age-control { margin-top: 18px; }
+.age-control input { margin-top: 8px; }
+.event-text, .summary-text, .poem-text, .answer-text, #life-history { white-space: pre-wrap; overflow-wrap: anywhere; }
+.mode-badge { font-size: 13px; color: #61529c; margin-bottom: 12px; }
+#game-notice, #end-notice { color: #9b4d00; margin: 12px 0; overflow-wrap: anywhere; }
+#life-history { max-height: 320px; overflow: auto; padding-top: 12px; font-size: 14px; }
+.history { margin-top: 20px; }
+.error-toast { max-width: min(600px, calc(100vw - 40px)); }
+.modal-content { max-height: 90vh; overflow: auto; }
+.photo-container img { width: 100%; }
+#retry-summary-btn { margin-bottom: 20px; }
+@media (max-width: 768px) { .init-content, .end-content { padding: 24px; } .game-title { margin-bottom: 24px; } .cover-footer { margin-top: 24px; } }
+
+.back-cover { margin-top: 16px; font-size: 14px; padding: 8px 14px; }
