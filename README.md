@@ -2,43 +2,41 @@
 
 一个中文人生模拟网页游戏：从出生开始，推进到指定年龄，在一生中介入最多三次，查看健康、财富、人生记录与最终结算。
 
+默认使用作者提供的共享 DeepSeek AI，访客不需要账号、密钥或本机服务。也保留可离线的经典模式。
+
 提供三种玩法：
 
 | 玩法 | 需要账号 / 网络 | 故事与问答 | 人物画面 |
 | --- | --- | --- | --- |
-| 经典模式（默认） | 不需要 | 本地随机事件与规则，包含建议带来的影响 | 本地人生插画 |
-| DeepSeek AI 模式 | 自己的 DeepSeek API 密钥、可用余额和网络 | DeepSeek 生成 | 本地人生插画 |
+| 经典模式 | 不需要 | 本地随机事件与规则，包含建议带来的影响 | 本地人生插画 |
+| DeepSeek AI 模式（默认） | 只需网络，使用作者提供的共享服务 | DeepSeek 生成 | 本地人生插画 |
 | PlayKit AI 模式 | PlayKit 登录、可用积分和网络 | PlayKit 文字模型生成 | PlayKit 图片模型生成 |
 
 经典模式可以完整玩到人生结束，不依赖任何外部脚本、账号或付费接口。AI 服务报错时会明确显示原因；文字推演失败不会推进年龄，也不会用固定故事冒充 AI 回答。
 
-## 立即体验经典模式
+## 访客如何玩
 
-下载或克隆仓库，把文件保留在同一文件夹，双击 `index.html` 即可。在封面选择“经典模式”，填写出生年份、地点和寄语，点击“进入世界”。
+在线游戏：`https://fizz-ai.github.io/Rebirth-Simulator/`。网页由 GitHub Pages 托管，共享 AI 接口为 `https://rebirth-simulator.1764294465.workers.dev`。下载仓库时，把文件保留在同一文件夹，双击 `index.html`，AI 模式会自动连接相同的共享服务。无需安装 Python、Node.js 或填写密钥。
 
-无需安装 Node.js，也不需要运行构建命令。请使用支持 `structuredClone` 的现代 Chrome、Edge、Firefox 或 Safari 浏览器。
+作者提供线上 AI 额度，全部访客合计每天最多 100 次请求，按北京时间零点重置。一次年龄推演或提问各发出一次文字请求，结算的总结和小诗各发出一次。失败尝试也计入请求次数。达到额度后可以继续玩经典模式。单个访客每分钟最多发起 12 次请求。
 
-## 使用 DeepSeek AI
+共享服务暂时不可用或不想联网时，在封面选择“经典模式”即可完整玩到人生结束。
 
-需要 Python 3.9 或更新版本；服务端只使用标准库，没有第三方 Python 依赖。
+请使用支持 `structuredClone` 的现代 Chrome、Edge、Firefox 或 Safari 浏览器。DeepSeek 负责文字，不生成照片；人物画面为明确标注的本地插画。
 
-1. 将 `.env.example` 复制为 `.env`。
-2. 用自己的 DeepSeek API 密钥填写 `DEEPSEEK_API_KEY`。默认文字模型为 `deepseek-flash`，可以通过 `DEEPSEEK_MODEL` 更改。
-3. 在项目文件夹运行：
+## 开发者自行部署（访客无需操作）
 
-   ```bash
-   python3 server.py
-   ```
+网页继续使用 GitHub Pages；共享 AI 接口使用 Cloudflare Workers，服务端凭据只配置一次，由站点维护者承担模型调用费用。部署步骤见 `DEPLOY.md`。
 
-4. 浏览器访问 `http://127.0.0.1:8765/`，在封面选择“AI 模式 · DeepSeek”。
+若只想在自己的电脑运行，也可以使用 Python 3.9 或更新版本；只用标准库，没有第三方依赖：
 
-Mac 也可以双击 `启动游戏.command`；Windows 可以双击 `start-windows.bat`。Windows 手动运行可使用 `py -3 server.py`。如果端口被占用，运行 `python3 server.py --port 8766`，使用终端输出的地址。
+1. 将 `.env.example` 复制为 `.env`，填写自己的 `DEEPSEEK_API_KEY`。
+2. 运行 `python3 server.py`，或在 Mac 双击 `启动游戏.command`，Windows 双击 `start-windows.bat`。
+3. 打开 `http://127.0.0.1:8765/`。页面优先使用已配置的本机服务；未配置时自动使用共享服务。
 
-环境变量优先于 `.env`。密钥仅由本机服务读取，不会返回网页，也不会保存在浏览器中；`.env` 被 Git 忽略。不要把自己的 `.env` 随文件分享给别人。
+`DEEPSEEK_MODEL` 默认为 `deepseek-flash`。支持用 `DEEPSEEK_ACCOUNT_TOKEN` 复用官方 Harness 账户授权；两者同时配置时 API 密钥优先，授权失效后由维护者更新。环境变量优先于 `.env`。本机调用不占线上共享额度。
 
-已使用官方 DeepSeek Harness 账户授权的本机开发者，也可在 `.env` 中使用 `DEEPSEEK_ACCOUNT_TOKEN` 替代 API 密钥；两者同时配置时优先使用 API 密钥。账户授权可能失效，失效后需重新授权并更新本机配置。服务不会自动读取或修改任何客户端的凭据文件。
-
-DeepSeek 负责文字，不生成照片；这个模式的人物画面是明确标注的本地插画。
+密钥不会返回网页，不写入浏览器存储；`.env` 和 `.dev.vars` 均被 Git 忽略。不要将这些文件随源码分享。
 
 ## 使用 PlayKit AI
 
@@ -68,7 +66,7 @@ PlayKit SDK 固定为 `1.6.0`，仅选择该模式时从 CDN 加载。模型是�
 JavaScript 回归测试需要 Node.js 18 或更新版本；Python 服务测试使用标准库。测试不会调用付费模型：
 
 ```bash
-node --test tests/game.test.cjs
+node --test tests/game.test.cjs tests/shared-worker.test.mjs
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
@@ -76,7 +74,7 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 
 ## 部署
 
-经典模式和 PlayKit 模式可以静态托管。DeepSeek 模式需要运行本机 Python 服务，不能仅靠 GitHub Pages 调用本机 `.env`。参阅 `DEPLOY.md`。
+网页托管在 GitHub Pages，AI 接口独立托管在 Cloudflare Workers；静态下载版和 GitHub Pages 通过 `service-config.js` 中的公开服务地址使用相同的共享额度。凭据始终留在服务端。参阅 `DEPLOY.md`。
 
 ## 使用说明
 

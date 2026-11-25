@@ -1,0 +1,26 @@
+{
+  "name": "rebirth-simulator",
+  "main": "cloudflare/worker.mjs",
+  "compatibility_date": "2026-11-25",
+  "workers_dev": true,
+  "vars": {
+    "DEEPSEEK_MODEL": "deepseek-flash",
+    "MAX_DAILY_REQUESTS": "100"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "DAILY_QUOTA",
+        "class_name": "DailyQuota"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "DailyQuota"
+      ]
+    }
+  ]
+}

@@ -28,3 +28,9 @@ Thumbs.db
 !.env.example
 __pycache__/
 *.pyc
+
+# 共享站点生成物与本地 Worker 凭据
+dist/
+.wrangler/
+.dev.vars
+.dev.vars.*

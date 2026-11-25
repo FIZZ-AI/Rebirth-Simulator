@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const base = fs.existsSync(path.join(__dirname, 'classic.js')) ? __dirname : path.join(__dirname, '..');
 const { ClassicEngine } = require(path.join(base, 'classic.js'));
-const { AIEngine, isOver } = require(path.join(base, 'game.js'));
+const { AIEngine, resolveDeepSeekService, isOver } = require(path.join(base, 'game.js'));
 const initial = () => ({ birthYear: 2000, birthPlace: '深圳', babyWish: '健康快乐', currentAge: 0, currentYear: 2000, health: 100, wealth: 0, interventionsLeft: 3, advice: [], history: ['0 岁：出生'], photos: [] });
 
 test('经典模式可逐步走完一生，保持年龄、健康、财富有效', async () => {
@@ -99,4 +99,39 @@ test('AI 总结失败仍能结算，并保留重试入口', async () => {
     await h.run('finish()');
     assert.match(h.get('life-summary').textContent, /100 年/);
     assert.equal(h.get('retry-summary-btn').hidden, false); assert.equal(h.run('busy'), false);
+});
+
+
+test('AI 优先使用当前站点服务，不要求访客提交凭据', async () => {
+    const calls = [];
+    const origin = await resolveDeepSeekService(async (url, options) => {
+        calls.push(url); assert.equal(options.credentials, 'omit');
+        return {ok:true,json:async()=>({configured:true})};
+    }, {protocol:'https:',origin:'https://rebirth.fizz2000.com'}, 'https://rebirth.fizz2000.com');
+    assert.equal(origin, ''); assert.deepEqual(calls, ['/api/status']);
+});
+
+test('下载版直接连接共享服务，不请求 file 协议下的本机接口', async () => {
+    const calls = [];
+    const origin = await resolveDeepSeekService(async url => {
+        calls.push(url); return {ok:true,json:async()=>({configured:true})};
+    }, {protocol:'file:',origin:'null'}, 'https://rebirth.fizz2000.com');
+    assert.equal(origin, 'https://rebirth.fizz2000.com');
+    assert.deepEqual(calls, ['https://rebirth.fizz2000.com/api/status']);
+});
+
+test('未配置本机密钥的静态下载版回退共享服务，服务失败只提示重试或经典模式', async () => {
+    const calls=[];
+    const origin = await resolveDeepSeekService(async url => {
+        calls.push(url); return {ok:true,json:async()=>({configured:url.startsWith('https:')})};
+    }, {protocol:'http:',origin:'http://localhost:8000'}, 'https://rebirth.fizz2000.com');
+    assert.equal(origin,'https://rebirth.fizz2000.com'); assert.equal(calls.length,2);
+    await assert.rejects(resolveDeepSeekService(async()=>{throw new Error('offline')}, {protocol:'file:'}, 'https://rebirth.fizz2000.com'), /共享 AI 服务暂时不可用/);
+});
+
+
+test('GitHub Pages 直接使用共享接口，不请求错误的根目录 API', async () => {
+    const calls=[];
+    await resolveDeepSeekService(async url=>{calls.push(url);return {ok:true,json:async()=>({configured:true})}}, {protocol:'https:',origin:'https://fizz-ai.github.io'}, 'https://rebirth-simulator.1764294465.workers.dev');
+    assert.deepEqual(calls,['https://rebirth-simulator.1764294465.workers.dev/api/status']);
 });

@@ -104,15 +104,33 @@ class AIEngine {
     async generatePoem(s) { return this.text(`根据这段人生写四句中文小诗，只返回诗。\n${this.context(s)}`); }
 }
 
+async function resolveDeepSeekService(fetcher = fetch, page = globalThis.location, sharedOrigin = globalThis.REBIRTH_SHARED_API || '') {
+    const origins = [];
+    if (page?.protocol !== 'file:' && !page?.origin?.endsWith('.github.io')) origins.push('');
+    const shared = sharedOrigin.replace(/\/$/, '');
+    if (shared && shared !== page?.origin) origins.push(shared);
+    for (const origin of origins) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        try {
+            const response = await fetcher(origin + '/api/status', {signal: controller.signal, credentials: 'omit'});
+            const settings = await response.json();
+            if (response.ok && settings.configured === true) return origin;
+        } catch { /* A plain static page can use the shared service instead. */ }
+        finally { clearTimeout(timer); }
+    }
+    throw new Error('共享 AI 服务暂时不可用，请稍后重试，或返回封面选择经典模式。');
+}
+
 class DeepSeekEngine extends AIEngine {
-    constructor() {
+    constructor(apiOrigin = '') {
         super({createChatClient: () => ({chat: async prompt => {
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 55000);
             try {
-                const response = await fetch('/api/chat', {
+                const response = await fetch(apiOrigin + '/api/chat', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt}), signal: controller.signal
+                    body: JSON.stringify({prompt}), signal: controller.signal, credentials: 'omit'
                 });
                 const result = await response.json();
                 if (!response.ok) throw Object.assign(new Error(result.error || 'DeepSeek 请求失败'), {statusCode:response.status});
@@ -160,15 +178,7 @@ function setBusy(value, message = '') {
 
 async function createEngine() {
     if (mode === 'classic') return new ClassicEngine();
-    if (mode === 'deepseek') {
-        if (location.protocol === 'file:') throw new Error('DeepSeek 模式需要本机服务，请用 python3 server.py 启动后打开 http://127.0.0.1:8765/。经典模式可直接打开文件。');
-        let response, settings;
-        try { response = await fetch('/api/status'); settings = await response.json(); }
-        catch { throw new Error('请使用 python3 server.py 启动本机服务，然后再选择 DeepSeek 模式。'); }
-        if (!response.ok || typeof settings.configured !== 'boolean') throw new Error('本机 AI 服务未启动，请使用 python3 server.py。');
-        if (!settings.configured) throw new Error('请先在本机 .env 中配置 DEEPSEEK_API_KEY，再进入 AI 模式。');
-        return new DeepSeekEngine();
-    }
+    if (mode === 'deepseek') return new DeepSeekEngine(await resolveDeepSeekService());
     if (!/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test($('game-id').value.trim())) throw new Error('请在封面 AI 设置中填写有效的 Game ID。');
     const textModel = $('text-model').value.trim(), imageModel = $('image-model').value.trim();
     if (!textModel || !imageModel) throw new Error('请在封面 AI 设置中填写文字和图片模型。');
@@ -186,7 +196,7 @@ async function enterWorld() {
     const place = $('birth-place').value.trim(), wish = $('baby-wish').value.trim();
     if (!$('birth-year').value.trim() || !Number.isInteger(year) || year < 1900 || year > 2100) return showError('请输入 1900–2100 之间的整数出生年份。');
     if (!place || !wish) return showError('请填写出生地点和婴儿寄语。');
-    setBusy(true, mode === 'ai' ? '连接 PlayKit，请完成登录…' : mode === 'deepseek' ? '连接本机 DeepSeek 服务…' : '准备新的人生…');
+    setBusy(true, mode === 'ai' ? '连接 PlayKit，请完成登录…' : mode === 'deepseek' ? '连接共享 AI 服务…' : '准备新的人生…');
     try {
         engine = await createEngine();
         state = {
@@ -266,7 +276,7 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
     $('game-mode').onchange = () => {
         const ai = $('game-mode').value === 'ai';
         $('ai-settings').hidden = !ai;
-        $('mode-description').textContent = $('game-mode').value === 'deepseek' ? 'DeepSeek 生成人生故事、回答与总结；人物使用本地插画。需用 python3 server.py 启动并配置自己的密钥。' : ai ? '联网生成故事和照片，需 PlayKit 账号与可用积分；服务不可用时可以选择经典模式。' : '本地随机事件与规则驱动，完整体验出生、成长、介入与人生结算。';
+        $('mode-description').textContent = $('game-mode').value === 'deepseek' ? '直接体验 AI 人生，无需注册或填写密钥。共享额度每天 100 次；人物使用本地插画。' : ai ? '联网生成故事和照片，需 PlayKit 账号与可用积分；服务不可用时可以选择经典模式。' : '本地随机事件与规则驱动，完整体验出生、成长、介入与人生结算。';
     };
     $('start-game-btn').onclick = () => { mode = $('game-mode').value; showPage('init'); };
     $('enter-world-btn').onclick = enterWorld;
@@ -315,4 +325,4 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
     showPage('cover'); setBusy(false);
 });
 
-if (typeof module !== 'undefined') module.exports = { AIEngine, DeepSeekEngine, isOver, errorMessage };
+if (typeof module !== 'undefined') module.exports = { AIEngine, DeepSeekEngine, resolveDeepSeekService, isOver, errorMessage };
