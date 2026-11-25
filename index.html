@@ -11,10 +11,30 @@
     <div id="cover-page" class="page active">
         <div class="cover-content">
             <h1 class="game-title">投胎模拟器</h1>
+            <div class="mode-picker">
+                <label for="game-mode">选择玩法</label>
+                <select id="game-mode">
+                    <option value="classic">经典模式 · 免费，无需账号，可离线</option>
+                    <option value="deepseek">AI 模式 · DeepSeek（推荐，需本机配置）</option>
+                    <option value="ai">AI 模式 · PlayKit（需登录与积分）</option>
+                </select>
+                <p id="mode-description">本地随机事件与规则驱动，完整体验出生、成长、介入与人生结算。</p>
+                <details id="ai-settings" hidden>
+                    <summary>AI 设置（开发者可选）</summary>
+                    <label for="game-id">PlayKit Game ID</label>
+                    <input id="game-id" value="46b3ff0f-be0d-47af-a685-ca14a09d104a" autocomplete="off">
+                    <label for="text-model">文字模型</label>
+                    <input id="text-model" value="gpt-4o" autocomplete="off">
+                    <label for="image-model">图片模型</label>
+                    <input id="image-model" value="flux-1-schnell" autocomplete="off">
+                    <label for="developer-token">开发者令牌（留空使用玩家登录）</label>
+                    <input id="developer-token" type="password" autocomplete="off" placeholder="仅本次页面使用，不保存">
+                </details>
+            </div>
             <button id="start-game-btn" class="btn btn-primary">开始游戏</button>
             <div class="cover-footer">
-                <p class="guide-text">体验一段由 AI 推演的人生旅程</p>
-                <p class="author">Powered by PlayKit AI</p>
+                <p class="guide-text">每次出生，都是一个新的故事</p>
+                <p class="author">经典模式可离线 · AI 故事支持 DeepSeek / PlayKit</p>
             </div>
         </div>
     </div>
@@ -25,15 +45,15 @@
             <h2>设定你的出生</h2>
             <div class="form-group">
                 <label for="birth-year">出生年份</label>
-                <input type="text" id="birth-year" placeholder="例如 1990">
+                <input type="number" id="birth-year" min="1900" max="2100" step="1" required placeholder="例如 1990">
             </div>
             <div class="form-group">
                 <label for="birth-place">出生地点</label>
-                <input type="text" id="birth-place" placeholder="例如 深圳">
+                <input type="text" id="birth-place" maxlength="80" placeholder="例如 深圳">
             </div>
             <div class="form-group">
                 <label for="baby-wish">婴儿寄语</label>
-                <textarea id="baby-wish" rows="4" placeholder="小孩子也许看不懂，但会在心里种下一颗种子"></textarea>
+                <textarea id="baby-wish" maxlength="500" rows="4" placeholder="小孩子也许看不懂，但会在心里种下一颗种子"></textarea>
             </div>
             <button id="enter-world-btn" class="btn btn-primary">进入世界</button>
         </div>
@@ -44,7 +64,7 @@
         <div class="game-layout">
             <!-- 左侧：世界演变区 -->
             <div class="world-section">
-                <h3>世界背景</h3>
+                <p id="active-mode" class="mode-badge"></p><h3>世界背景</h3>
                 <div id="world-year" class="info-item"></div>
                 <div id="world-place" class="info-item"></div>
                 <div id="world-context" class="context-text"></div>
@@ -54,7 +74,11 @@
             <div class="life-section">
                 <h3>人生故事</h3>
                 <div id="current-age" class="age-display"></div>
-                <div id="life-event" class="event-text"></div>
+                <div id="life-event" class="event-text"></div><p id="game-notice" role="status"></p><button id="back-cover-btn" class="btn btn-secondary back-cover">返回封面</button><details class="history"><summary>查看人生记录</summary><div id="life-history"></div></details>
+                <div class="age-control">
+                    <label for="target-age">下一站年龄（1–100 岁）</label>
+                    <input id="target-age" type="number" min="1" max="100" step="1" value="5">
+                </div>
                 <div class="action-buttons">
                     <button id="advance-age-btn" class="btn btn-primary">推进年龄</button>
                     <button id="intervene-btn" class="btn btn-secondary">介入人生</button>
@@ -95,7 +119,7 @@
     <div id="end-page" class="page">
         <div class="end-content">
             <h2>人生落幕</h2>
-            <div id="life-summary" class="summary-text"></div>
+            <p id="end-notice" role="status"></p><button id="retry-summary-btn" class="btn btn-secondary" hidden>重试 AI 总结</button><div id="life-summary" class="summary-text"></div>
             <div class="final-stats">
                 <p>最终财富：<span id="final-wealth"></span></p>
             </div>
@@ -112,14 +136,14 @@
     </div>
 
     <!-- 错误提示 -->
-    <div id="error-toast" class="error-toast"></div>
+    <div id="error-toast" class="error-toast" role="alert"></div>
 
     <!-- 介入输入弹窗 -->
     <div id="intervene-modal" class="modal">
         <div class="modal-content">
             <h3>介入人生</h3>
             <p>输入你的建议（来自未来的你）：</p>
-            <textarea id="intervene-input" rows="4" placeholder="例如：多读书、去创业、注意健康..."></textarea>
+            <textarea id="intervene-input" maxlength="500" rows="4" placeholder="例如：多读书、去创业、注意健康..."></textarea>
             <div class="modal-buttons">
                 <button id="intervene-confirm-btn" class="btn btn-primary">确认</button>
                 <button id="intervene-cancel-btn" class="btn btn-secondary">取消</button>
@@ -132,7 +156,7 @@
         <div class="modal-content">
             <h3>提问</h3>
             <p>你想问什么？</p>
-            <textarea id="question-input" rows="3" placeholder="例如：我现在过得开心吗？"></textarea>
+            <textarea id="question-input" maxlength="500" rows="3" placeholder="例如：我现在过得开心吗？"></textarea>
             <div class="modal-buttons">
                 <button id="question-confirm-btn" class="btn btn-primary">提问</button>
                 <button id="question-cancel-btn" class="btn btn-secondary">取消</button>
@@ -141,8 +165,8 @@
         </div>
     </div>
 
-    <!-- 引入 PlayKit SDK (UMD) -->
-    <script src="https://unpkg.com/playkit-sdk@latest/dist/playkit-sdk.umd.js"></script>
+    <!-- 经典模式不加载任何外部资源；PlayKit 仅在选择 AI 模式后加载。 -->
+    <script src="classic.js"></script>
     <!-- 游戏逻辑 -->
     <script src="game.js"></script>
 </body>
