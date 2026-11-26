@@ -1,4 +1,5 @@
 // Public game service. Credentials are runtime secrets, never browser assets.
+import {validatePhotoRequest, generatePhoto} from './photos.mjs';
 const DEFAULT_LIMIT = 100;
 
 function allowedOrigin(request) {
@@ -58,9 +59,10 @@ export async function handleRequest(request, env, upstreamFetch = fetch) {
     }
     try {
         if (url.pathname === '/api/status' && request.method === 'GET') {
-            return json(request, {configured: Boolean(env.DEEPSEEK_API_KEY || env.DEEPSEEK_ACCOUNT_TOKEN), model: env.DEEPSEEK_MODEL || 'deepseek-flash', shared: true, dailyLimit: dailyLimit(env)});
+            return json(request, {configured: Boolean(env.DEEPSEEK_API_KEY || env.DEEPSEEK_ACCOUNT_TOKEN), model: env.DEEPSEEK_MODEL || 'deepseek-flash', photosConfigured: Boolean(env.PLAYKIT_GAME_ID && env.PLAYKIT_DEVELOPER_TOKEN), shared: true, dailyLimit: dailyLimit(env)});
         }
-        if (url.pathname !== '/api/chat' || request.method !== 'POST') return json(request, {error: '接口不存在。'}, 404);
+        const photo = url.pathname === '/api/image';
+        if ((!photo && url.pathname !== '/api/chat') || request.method !== 'POST') return json(request, {error: '接口不存在。'}, 404);
         if (request.headers.get('Content-Type')?.split(';')[0].trim() !== 'application/json') return json(request, {error: '请求格式不正确。'}, 415);
         if (Number(request.headers.get('Content-Length')) > 65536) return json(request, {error: '故事内容过长。'}, 413);
         // Bound the stream as well: browsers and chunked clients may omit Content-Length.
@@ -81,14 +83,18 @@ export async function handleRequest(request, env, upstreamFetch = fetch) {
         let body;
         try { body = JSON.parse(new TextDecoder().decode(bytes)); }
         catch { return json(request, {error: '请求格式不正确。'}, 400); }
-        if (typeof body?.prompt !== 'string' || !body.prompt.trim() || body.prompt.length > 12000) return json(request, {error: '故事内容无效或过长。'}, 400);
+        if (photo ? !validatePhotoRequest(body) : typeof body?.prompt !== 'string' || !body.prompt.trim() || body.prompt.length > 12000) return json(request, {error: photo ? '照片的年龄、年份或人物资料无效。' : '故事内容无效或过长。'}, 400);
         const key = env.DEEPSEEK_API_KEY;
         const accountToken = env.DEEPSEEK_ACCOUNT_TOKEN;
-        if (!key && !accountToken) return json(request, {error: '共享 AI 服务暂未开通，请先玩经典模式。'}, 503);
+        if (photo ? !env.PLAYKIT_GAME_ID || !env.PLAYKIT_DEVELOPER_TOKEN : !key && !accountToken) return json(request, {error: photo ? '人物照片服务暂不可用，可以稍后重试。' : '共享 AI 服务暂未开通，请先玩经典模式。'}, 503);
         if (!env.DAILY_QUOTA) throw new Error('Quota binding missing');
         const quota = env.DAILY_QUOTA.get(env.DAILY_QUOTA.idFromName('global'));
         const reservation = await quota.fetch(new Request('https://quota.internal/reserve', {method: 'POST', headers: {'X-Visitor-IP': request.headers.get('CF-Connecting-IP') || 'unknown'}}));
         if (!reservation.ok) return json(request, await reservation.json(), reservation.status);
+        if (photo) {
+            try { return json(request, {image: await generatePhoto(body, env, upstreamFetch)}); }
+            catch { return json(request, {error: '人物照片生成失败或超时，文字进度已保留，可以点击“重试照片”。'}, 503); }
+        }
         const response = await upstreamFetch('https://api.deepseek.com/chat/completions', {
             method: 'POST', headers: {'Content-Type': 'application/json', ...(key ? {'Authorization': `Bearer ${key}`} : {'x-dsh-auth-token': accountToken})},
             body: JSON.stringify({model: env.DEEPSEEK_MODEL || 'deepseek-flash', messages: [{role: 'user', content: body.prompt}], stream: false, max_tokens: 2048, thinking: {type: 'disabled'}}),

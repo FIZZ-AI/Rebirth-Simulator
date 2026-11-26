@@ -1,4 +1,5 @@
 import contextlib
+import base64
 import importlib.util
 import io
 import http.client
@@ -86,6 +87,22 @@ class ServerTests(unittest.TestCase):
             self.assertIn("余额不足", content)
         with patch.object(app, "urlopen", return_value=io.BytesIO(b'{"choices":[]}')):
             self.assertEqual(self.request("/api/chat", {"prompt": "test"})[0], 502)
+
+    def test_photo_route_uses_owner_image_service_without_exposing_credentials(self):
+        settings={'key':'test-private-key','account_token':'','model':'deepseek-flash',
+                  'image_token':'private-image-token','image_game':'46b3ff0f-be0d-47af-a685-ca14a09d104a','image_model':'flux-1-schnell'}
+        encoded=base64.b64encode(b'RIFF1234WEBPtest-pixels').decode()
+        with patch.object(app,'load_settings',return_value=settings), patch.object(app,'urlopen',return_value=io.BytesIO(json.dumps({'data':[{'b64_json':encoded}]}).encode())) as upstream:
+            code,content=self.request('/api/image',{'age':20,'year':2020,'place':'深圳','seed':314159,'profile':0})
+            self.assertEqual(code,200);self.assertTrue(json.loads(content)['image'].startswith('data:image/webp;base64,'))
+            self.assertNotIn('private-image-token',content)
+            req=upstream.call_args.args[0];self.assertEqual(req.get_header('Authorization'),'Bearer private-image-token')
+            self.assertIn('20-year-old',json.loads(req.data)['prompt'])
+
+    def test_invalid_photo_parameters_do_not_call_upstream(self):
+        with patch.object(app,'urlopen') as upstream:
+            self.assertEqual(self.request('/api/image',{'age':101})[0],400)
+            upstream.assert_not_called()
 
 
 class ConfigurationTests(unittest.TestCase):

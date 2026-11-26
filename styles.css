@@ -511,3 +511,4 @@ body {
 @media (max-width: 768px) { .init-content, .end-content { padding: 24px; } .game-title { margin-bottom: 24px; } .cover-footer { margin-top: 24px; } }
 
 .back-cover { margin-top: 16px; font-size: 14px; padding: 8px 14px; }
+#retry-photo-btn { width: 100%; margin-top: 12px; }
