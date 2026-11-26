@@ -18,7 +18,7 @@
                     <option value="classic">经典模式 · 无需联网</option>
                     <option value="ai">AI 模式 · PlayKit（需登录与积分）</option>
                 </select>
-                <p id="mode-description">直接体验 AI 人生，无需注册或填写密钥。共享额度每天 100 次；人物使用本地插画。</p>
+                <p id="mode-description">AI 生成人生故事和人物照片，无需注册或填写密钥。文字与照片合计共享每天 100 次请求。</p>
                 <details id="ai-settings" hidden>
                     <summary>AI 设置（开发者可选）</summary>
                     <label for="game-id">PlayKit Game ID</label>
@@ -108,8 +108,9 @@
                     </div>
                 </div>
                 <div class="photo-panel">
-                    <h3>当前照片</h3>
+                    <h3 id="photo-title">AI 人物照片</h3>
                     <div id="current-photo" class="photo-container"></div>
+                    <button id="retry-photo-btn" class="btn btn-secondary" hidden>重试照片</button>
                 </div>
             </div>
         </div>

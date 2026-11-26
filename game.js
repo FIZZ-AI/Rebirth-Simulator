@@ -140,12 +140,32 @@ class DeepSeekEngine extends AIEngine {
                 throw error;
             } finally { clearTimeout(timer); }
         }}), createImageClient: () => null});
+        this.apiOrigin = apiOrigin;
     }
-    async generatePhoto(s) { return lifePortrait(s); }
+    async generatePhoto(s) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 90000);
+        try {
+            const response = await fetch(this.apiOrigin + '/api/image', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'omit',
+                body: JSON.stringify({age: s.currentAge, year: s.currentYear, place: s.birthPlace, seed: s.photoSeed, profile: s.photoProfile}),
+                signal: controller.signal
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || '照片生成失败，请稍后重试。');
+            if (typeof result.image !== 'string' || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(result.image)) throw new Error('照片没有返回有效图像，请重试。');
+            return result.image;
+        } catch (error) {
+            if (error.name === 'AbortError') throw new Error('照片生成超时，文字进度已保留，可以重试。');
+            throw error;
+        } finally { clearTimeout(timer); }
+    }
 }
 
+function isPhoto(src) { return typeof src === 'string' && /^(data:image\/(png|jpeg|webp);base64,|https:\/\/)/.test(src); }
+
 function render() {
-    $('active-mode').textContent = mode === 'classic' ? '经典模式 · 本地规则与随机事件' : mode === 'deepseek' ? 'AI 模式 · DeepSeek · 本地人生插画' : 'AI 模式 · PlayKit';
+    $('active-mode').textContent = mode === 'classic' ? '经典模式 · 本地规则与随机事件' : mode === 'deepseek' ? 'AI 模式 · DeepSeek 故事 + AI 人物照片' : 'AI 模式 · PlayKit';
     $('world-year').textContent = `年份：${state.currentYear}`;
     $('world-place').textContent = `地点：${state.birthPlace}`;
     $('world-context').textContent = state.worldContext;
@@ -159,8 +179,11 @@ function render() {
     $('target-age').min = state.currentAge + 1;
     $('target-age').value = Math.min(100, state.currentAge + 5);
     const image = document.createElement('img');
-    image.alt = mode === 'ai' ? '当前人生照片' : '人生插画';
     image.src = state.photos.at(-1);
+    const photo = isPhoto(image.src);
+    image.alt = photo ? `${state.currentAge} 岁的 AI 人物照片` : '人生插画';
+    $('photo-title').textContent = photo ? 'AI 人物照片' : mode === 'classic' ? '人生插画' : '照片暂不可用 · 插画占位';
+    $('retry-photo-btn').hidden = mode === 'classic' || photo;
     $('current-photo').replaceChildren(image);
     setBusy(busy);
 }
@@ -170,7 +193,7 @@ function setBusy(value, message = '') {
     busy = value;
     $('loading-message').textContent = message;
     $('loading-overlay').classList.toggle('active', value);
-    ['start-game-btn', 'back-cover-btn', 'enter-world-btn', 'advance-age-btn', 'ask-question-btn', 'question-confirm-btn', 'intervene-confirm-btn', 'restart-btn', 'retry-summary-btn'].forEach(id => { $(id).disabled = value; });
+    ['start-game-btn', 'back-cover-btn', 'enter-world-btn', 'advance-age-btn', 'ask-question-btn', 'question-confirm-btn', 'intervene-confirm-btn', 'restart-btn', 'retry-summary-btn', 'retry-photo-btn'].forEach(id => { $(id).disabled = value; });
     $('intervene-btn').disabled = value || !state || state.interventionsLeft <= 0 || isOver(state);
     $('advance-age-btn').disabled = value || !state || isOver(state);
     $('target-age').disabled = value || !state || isOver(state);
@@ -202,6 +225,7 @@ async function enterWorld() {
         state = {
             birthYear: year, birthPlace: place, babyWish: wish, currentAge: 0, currentYear: year,
             health: 100, wealth: 0, interventionsLeft: 3, advice: [],
+            photoSeed: Math.floor(Math.random() * 2147483646) + 1, photoProfile: Math.floor(Math.random() * 4),
             history: [`0 岁：出生于 ${year} 年，${place}。婴儿寄语：${wish}`], photos: [],
             worldContext: `${year} 年，${place}。一个新生命来到了这个世界。`,
             lifeEvent: `你在家人的期待中出生。给未来的寄语是：「${wish}」。选择下一站的年龄，开始书写人生。`
@@ -209,6 +233,12 @@ async function enterWorld() {
         state.photos.push(lifePortrait(state));
         $('game-notice').textContent = '';
         showPage('game'); render();
+        if (mode !== 'classic') {
+            $('loading-message').textContent = '正在生成出生时的人物照片…';
+            try { state.photos[0] = await engine.generatePhoto(structuredClone(state)); }
+            catch (error) { $('game-notice').textContent = '出生照片暂未生成，已使用插画占位，可以点击“重试照片”。' + errorMessage(error); }
+            render();
+        }
     } catch (error) { showError(errorMessage(error)); }
     finally { setBusy(false); }
 }
@@ -232,7 +262,7 @@ async function advance() {
         next.history.push(`${evolution.lifeEvent}\n（${next.currentAge} 岁，健康 ${next.health}，财富 ${next.wealth.toLocaleString()} 元）`);
         let photo;
         $('game-notice').textContent = '';
-        if (mode === 'ai') $('loading-message').textContent = '人生故事已生成，正在绘制照片…';
+        if (mode !== 'classic') $('loading-message').textContent = '人生故事已生成，正在生成人物照片…';
         try { photo = await engine.generatePhoto(next); }
         catch (error) {
             photo = lifePortrait(next);
@@ -246,6 +276,17 @@ async function advance() {
         $('game-notice').textContent = errorMessage(error) + ' 本次进度未推进，可再次点击“推进年龄”。';
         showError(errorMessage(error));
     } finally { setBusy(false); }
+}
+
+async function retryPhoto() {
+    if (busy || !state || mode === 'classic') return;
+    setBusy(true, '正在重新生成人物照片…');
+    try {
+        state.photos[state.photos.length - 1] = await engine.generatePhoto(structuredClone(state));
+        $('game-notice').textContent = '';
+        render();
+    } catch (error) { showError(errorMessage(error)); }
+    finally { setBusy(false); }
 }
 
 async function finish() {
@@ -276,7 +317,7 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
     $('game-mode').onchange = () => {
         const ai = $('game-mode').value === 'ai';
         $('ai-settings').hidden = !ai;
-        $('mode-description').textContent = $('game-mode').value === 'deepseek' ? '直接体验 AI 人生，无需注册或填写密钥。共享额度每天 100 次；人物使用本地插画。' : ai ? '联网生成故事和照片，需 PlayKit 账号与可用积分；服务不可用时可以选择经典模式。' : '本地随机事件与规则驱动，完整体验出生、成长、介入与人生结算。';
+        $('mode-description').textContent = $('game-mode').value === 'deepseek' ? 'AI 生成人生故事和人物照片，无需注册或填写密钥。文字与照片合计共享每天 100 次请求。' : ai ? '联网生成故事和照片，需 PlayKit 账号与可用积分；服务不可用时可以选择经典模式。' : '本地随机事件与规则驱动，完整体验出生、成长、介入与人生结算。';
     };
     $('start-game-btn').onclick = () => { mode = $('game-mode').value; showPage('init'); };
     $('enter-world-btn').onclick = enterWorld;
@@ -310,6 +351,7 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
         $(name + '-cancel-btn').onclick = () => { $(name + '-modal').classList.remove('active'); $(name + '-input').value = ''; };
     }
     $('retry-summary-btn').onclick = () => { if (!busy && state) finish(); };
+    $('retry-photo-btn').onclick = retryPhoto;
     $('back-cover-btn').onclick = () => { if (!busy) showPage('cover'); };
     $('restart-btn').onclick = () => {
         if (busy) return;
@@ -325,4 +367,4 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
     showPage('cover'); setBusy(false);
 });
 
-if (typeof module !== 'undefined') module.exports = { AIEngine, DeepSeekEngine, resolveDeepSeekService, isOver, errorMessage };
+if (typeof module !== 'undefined') module.exports = { AIEngine, DeepSeekEngine, resolveDeepSeekService, isOver, isPhoto, errorMessage };

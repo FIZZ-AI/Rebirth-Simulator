@@ -9,7 +9,7 @@
 | 玩法 | 需要账号 / 网络 | 故事与问答 | 人物画面 |
 | --- | --- | --- | --- |
 | 经典模式 | 不需要 | 本地随机事件与规则，包含建议带来的影响 | 本地人生插画 |
-| DeepSeek AI 模式（默认） | 只需网络，使用作者提供的共享服务 | DeepSeek 生成 | 本地人生插画 |
+| DeepSeek AI 模式（默认） | 只需网络，使用作者提供的共享服务 | DeepSeek 生成 | 独立图片服务生成 AI 人物照片 |
 | PlayKit AI 模式 | PlayKit 登录、可用积分和网络 | PlayKit 文字模型生成 | PlayKit 图片模型生成 |
 
 经典模式可以完整玩到人生结束，不依赖任何外部脚本、账号或付费接口。AI 服务报错时会明确显示原因；文字推演失败不会推进年龄，也不会用固定故事冒充 AI 回答。
@@ -18,11 +18,11 @@
 
 在线游戏：`https://fizz-ai.github.io/Rebirth-Simulator/`。网页由 GitHub Pages 托管，共享 AI 接口为 `https://rebirth-simulator.1764294465.workers.dev`。下载仓库时，把文件保留在同一文件夹，双击 `index.html`，AI 模式会自动连接相同的共享服务。无需安装 Python、Node.js 或填写密钥。
 
-作者提供线上 AI 额度，全部访客合计每天最多 100 次请求，按北京时间零点重置。一次年龄推演或提问各发出一次文字请求，结算的总结和小诗各发出一次。失败尝试也计入请求次数。达到额度后可以继续玩经典模式。单个访客每分钟最多发起 12 次请求。
+作者提供线上 AI 额度，文字和图片全部访客合计每天最多 100 次请求，按北京时间零点重置。出生时生成一张照片；每次年龄推演包含一次文字请求和一次图片请求；提问、总结和小诗各发出一次文字请求。重试照片会增加一次图片请求。失败尝试也计入请求次数。达到额度后可以继续玩经典模式。单个访客每分钟最多发起 12 次请求。
 
 共享服务暂时不可用或不想联网时，在封面选择“经典模式”即可完整玩到人生结束。
 
-请使用支持 `structuredClone` 的现代 Chrome、Edge、Firefox 或 Safari 浏览器。DeepSeek 负责文字，不生成照片；人物画面为明确标注的本地插画。
+请使用支持 `structuredClone` 的现代 Chrome、Edge、Firefox 或 Safari 浏览器。DeepSeek 负责文字，独立图片服务负责 AI 人物照片。每局复用固定外观设定和随机种子，随年龄生成照片；经典模式保留本地插画。
 
 ## 开发者自行部署（访客无需操作）
 
@@ -35,6 +35,8 @@
 3. 打开 `http://127.0.0.1:8765/`。页面优先使用已配置的本机服务；未配置时自动使用共享服务。
 
 `DEEPSEEK_MODEL` 默认为 `deepseek-flash`。支持用 `DEEPSEEK_ACCOUNT_TOKEN` 复用官方 Harness 账户授权；两者同时配置时 API 密钥优先，授权失效后由维护者更新。环境变量优先于 `.env`。本机调用不占线上共享额度。
+
+本机启用照片时，在 `.env` 中额外配置 `PLAYKIT_GAME_ID` 和 `PLAYKIT_DEVELOPER_TOKEN`，图片模型默认为 `flux-1-schnell`。线上由维护者配置一次即可，访客不需要填写。
 
 密钥不会返回网页，不写入浏览器存储；`.env` 和 `.dev.vars` 均被 Git 忽略。不要将这些文件随源码分享。
 
@@ -53,7 +55,7 @@ PlayKit SDK 固定为 `1.6.0`，仅选择该模式时从 CDN 加载。模型是�
 - 一生最多介入三次。经典模式识别健康、学习、创业等建议，影响后续事件与数值；AI 模式由模型结合完整记录推演。
 - 提问不改变数值，也不消耗介入次数。
 - 健康降到 0 或达到 100 岁时结算，展示总结、留影和小诗。
-- AI 照片失败会显示提示并使用本地插画，已生成的文字不会丢失。
+- 出生时及每次年龄推进后自动生成 AI 人物照片；失败时明确标注插画占位并显示“重试照片”，已生成的文字和进度不会丢失。
 - AI 总结失败仍可查看本局记录整理的总结，并可点击“重试 AI 总结”。
 - 当前版本的人生进度保存在页面内存中；刷新网页或开始新的人生会清空进度。
 
@@ -63,10 +65,10 @@ PlayKit SDK 固定为 `1.6.0`，仅选择该模式时从 CDN 加载。模型是�
 
 核心文件：`index.html`、`styles.css`、`game.js`、`classic.js`、`server.py`。
 
-JavaScript 回归测试需要 Node.js 18 或更新版本；Python 服务测试使用标准库。测试不会调用付费模型：
+JavaScript 回归测试需要 Node.js 22 或更新版本；Python 服务测试使用标准库。测试不会调用付费模型：
 
 ```bash
-node --test tests/game.test.cjs tests/shared-worker.test.mjs
+node --test tests/game.test.cjs tests/shared-worker.test.mjs tests/photos.test.mjs
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 

@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const base = fs.existsSync(path.join(__dirname, 'classic.js')) ? __dirname : path.join(__dirname, '..');
 const { ClassicEngine } = require(path.join(base, 'classic.js'));
-const { AIEngine, resolveDeepSeekService, isOver } = require(path.join(base, 'game.js'));
+const { AIEngine, DeepSeekEngine, resolveDeepSeekService, isOver, isPhoto } = require(path.join(base, 'game.js'));
 const initial = () => ({ birthYear: 2000, birthPlace: '深圳', babyWish: '健康快乐', currentAge: 0, currentYear: 2000, health: 100, wealth: 0, interventionsLeft: 3, advice: [], history: ['0 岁：出生'], photos: [] });
 
 test('经典模式可逐步走完一生，保持年龄、健康、财富有效', async () => {
@@ -134,4 +134,32 @@ test('GitHub Pages 直接使用共享接口，不请求错误的根目录 API', 
     const calls=[];
     await resolveDeepSeekService(async url=>{calls.push(url);return {ok:true,json:async()=>({configured:true})}}, {protocol:'https:',origin:'https://fizz-ai.github.io'}, 'https://rebirth-simulator.1764294465.workers.dev');
     assert.deepEqual(calls,['https://rebirth-simulator.1764294465.workers.dev/api/status']);
+});
+
+test('默认 AI 照片调用共享图片接口，只发送人物资料', async () => {
+    const original=globalThis.fetch;
+    try {
+        globalThis.fetch=async(url,options)=>{
+            assert.equal(url,'https://service.example/api/image');
+            assert.equal(options.credentials,'omit');
+            assert.deepEqual(JSON.parse(options.body),{age:20,year:2020,place:'深圳',seed:314159,profile:0});
+            return Response.json({image:'data:image/webp;base64,UklGRjEyMzRXRUJQdGVzdA=='});
+        };
+        const engine=new DeepSeekEngine('https://service.example');
+        assert.ok(isPhoto(await engine.generatePhoto({...initial(),currentAge:20,currentYear:2020,photoSeed:314159,photoProfile:0})));
+        assert.equal(isPhoto('data:image/svg+xml,placeholder'),false);
+        globalThis.fetch=async()=>Response.json({image:'data:image/svg+xml,not-a-photo'});
+        await assert.rejects(engine.generatePhoto(initial()),/有效图像/);
+    } finally {globalThis.fetch=original;}
+});
+
+test('照片失败后显示占位说明与重试入口，重试不推进人生或再次调用文字', async () => {
+    const h=harness();h.context.original=initial();
+    h.run("state=structuredClone(original);state.photos=['data:image/svg+xml,placeholder'];mode='deepseek';engine={generatePhoto:async()=> 'data:image/webp;base64,UklGRjEyMzRXRUJQdGVzdA=='};render();");
+    assert.match(h.get('photo-title').textContent,/插画占位/);
+    assert.equal(h.get('retry-photo-btn').hidden,false);
+    await h.run('retryPhoto()');
+    assert.equal(h.run('state.currentAge'),0);assert.equal(h.run('state.history.length'),1);
+    assert.equal(h.get('photo-title').textContent,'AI 人物照片');
+    assert.equal(h.get('retry-photo-btn').hidden,true);
 });
